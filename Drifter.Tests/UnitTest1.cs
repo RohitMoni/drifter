@@ -8,7 +8,9 @@ namespace Drifter.Tests
         [Fact]
         public void Test1()
         {
-
+            var myclass = new Drifter.Class2();
+            myclass.printsomething();
+            Assert.True(true);
         }
     }
 }
