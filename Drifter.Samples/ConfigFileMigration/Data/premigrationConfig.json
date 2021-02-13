@@ -1,0 +1,21 @@
+{
+    "version": "1",
+    "name": "Drifter",
+    "sampleNumber": 1,
+    "context": 
+    {
+        "comment": "This shows an example of a json object"
+    },
+    "configTypesSupported":
+    [
+        "Any",
+        "This",
+        "Is",
+        "Just",
+        "An",
+        "Array",
+        "Example"
+    ],
+    "migrated": false,
+    "nullable": null
+}
