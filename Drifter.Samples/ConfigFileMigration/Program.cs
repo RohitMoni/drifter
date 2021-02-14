@@ -72,6 +72,63 @@ namespace ConfigFileMigration
                 graph[key].Add(migrationStep);
             }
         }
+
+        private class PathNode
+        {
+            internal int totalCost = 0;
+            internal MigrationStepType migrationStep = null;
+        }
+
+        // Throws an InvalidOperationException if there is no possible path between the versions specified
+        internal List<MigrationStepType> GetShortestMigrationPath(VersionType from, VersionType to)
+        {
+            var visitedPathNodes = new Dictionary<VersionType, PathNode>();
+
+            Action<VersionType, MigrationStepType, int> traverse = null;
+
+            traverse = (v, migrationStep, cost) =>
+            {            
+                if (!visitedPathNodes.ContainsKey(v))
+                {
+                    visitedPathNodes.Add(v, new PathNode { totalCost = cost, migrationStep = migrationStep });
+                    if (v.Equals(to)) // Our current version is the desired version
+                        return;
+
+                    if (graph.ContainsKey(v)) {
+                        foreach (var migration in graph[v])
+                        {
+                            traverse(migration.To, migration, cost + migration.Cost);
+                        }
+                    }
+                }
+                else if (visitedPathNodes[v].totalCost > cost)
+                {
+                    visitedPathNodes[v].migrationStep = migrationStep;
+                    visitedPathNodes[v].totalCost = cost;
+                }
+            };
+
+            traverse(from, null, 0);
+
+            // Graph traversal done
+
+            // If we never visited the 'to' version, means that no path to it exists
+            if (!visitedPathNodes.ContainsKey(to))
+                throw new InvalidOperationException($"No migration path defined from version {from} to version {to}");
+
+            // Trace visited nodes backwards to find our shortest path
+            var shortestMigrationPath = new List<MigrationStepType>();
+
+            var step = visitedPathNodes[to].migrationStep;
+            while (step != null)
+            {
+                shortestMigrationPath.Add(step);
+                step = visitedPathNodes[step.From].migrationStep;
+            }
+
+            shortestMigrationPath.Reverse();
+            return shortestMigrationPath;
+        }
     }
 
     public abstract class DataMigrator<MigrationStepType, VersionType, InputType> 
@@ -85,7 +142,7 @@ namespace ConfigFileMigration
             migrationGraph.RegisterMigrationStep(migrationStep);
         }
 
-        public abstract bool RunMigration();
+        public abstract bool RunMigration(InputType input);
     }
 
     public class VersionNumber : IComparable<VersionNumber>, IEquatable<VersionNumber>
@@ -130,7 +187,7 @@ namespace ConfigFileMigration
 
         public bool Reversible { get; set; } = true;
 
-        public override bool RunMigration()
+        public override bool RunMigration(FileInfo input)
         {
             return true;
         }
@@ -140,7 +197,17 @@ namespace ConfigFileMigration
     {
         static void Main(string[] args)
         {
-            new ConfigDataMigrator().RunMigration();
+            var configDataMigrator = new ConfigDataMigrator();
+            configDataMigrator.RegisterMigrationStep(
+                new ConfigMigrationStep(1, 2, 
+                    fileInfo => {
+                        return true;
+                    }
+                )
+            );
+
+            var configFileInfo = new FileInfo(@"Data/premigrationConfig.json");
+            configDataMigrator.RunMigration(configFileInfo);
         }
     }
 }
