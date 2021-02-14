@@ -21,7 +21,7 @@ namespace Drifter.Tests
                 new ConfigMigrationStep(1, 2, null)
             );
 
-            Assert.Equal(dummyMigrationGraph.graph.Count, 1);
+            Assert.Single(dummyMigrationGraph.graph);
         }
 
         [Fact]
@@ -40,7 +40,7 @@ namespace Drifter.Tests
                 new ConfigMigrationStep(4, 5, null)
             );
 
-            Assert.Equal(dummyMigrationGraph.graph.Count, 4);
+            Assert.Equal(4, dummyMigrationGraph.graph.Count);
         }
 
         [Fact]
@@ -70,19 +70,78 @@ namespace Drifter.Tests
         [Fact]
         public void TestShortestMigrationPath()
         {
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(1, 2, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(2, 3, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(3, 4, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(4, 5, null)
+            );
 
+            var shortestPath = dummyMigrationGraph.GetShortestMigrationPath(1, 5);
+
+            Assert.Equal(4, shortestPath.Count);
+            Assert.Equal(1, shortestPath[0].From);
+            Assert.Equal(2, shortestPath[0].To);
+            Assert.Equal(2, shortestPath[1].From);
+            Assert.Equal(3, shortestPath[1].To);
+            Assert.Equal(3, shortestPath[2].From);
+            Assert.Equal(4, shortestPath[2].To);
+            Assert.Equal(4, shortestPath[3].From);
+            Assert.Equal(5, shortestPath[3].To);
         }
 
         [Fact]
         public void TestShortestMigrationPath2()
         {
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(1, 2, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(2, 3, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(3, 4, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(1, 4, null)
+            );
 
+            var shortestPath = dummyMigrationGraph.GetShortestMigrationPath(1, 4);
+
+            Assert.Single(shortestPath);
+            Assert.Equal(1, shortestPath[0].From);
+            Assert.Equal(4, shortestPath[0].To);
         }
 
         [Fact]
         public void TestShortestMigrationPath3()
         {
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(1, 2, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(2, 3, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(3, 4, null)
+            );
+            dummyMigrationGraph.RegisterMigrationStep(
+                new ConfigMigrationStep(2, 4, null)
+            );
 
+            var shortestPath = dummyMigrationGraph.GetShortestMigrationPath(1, 4);
+
+            Assert.Equal(2, shortestPath.Count);
+            Assert.Equal(1, shortestPath[0].From);
+            Assert.Equal(2, shortestPath[0].To);
+            Assert.Equal(2, shortestPath[1].From);
+            Assert.Equal(4, shortestPath[1].To);
         }
     }
 }
