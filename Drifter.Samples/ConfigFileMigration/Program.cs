@@ -21,7 +21,6 @@ using System.Collections.Generic;
 namespace ConfigFileMigration
 {
     public class DataMigrationStep<VersionType, InputType> 
-        where VersionType : System.IComparable<VersionType>, System.IEquatable<VersionType>
     {
         public DataMigrationStep(VersionType from, VersionType to, Func<InputType, bool> run, int cost = 1)
         {
@@ -45,11 +44,10 @@ namespace ConfigFileMigration
         public int Cost { get; init; } = 1;
     }
 
-    internal class MigrationGraph<MigrationStepType, VersionType, InputType>
+    internal class DataMigrationGraph<MigrationStepType, VersionType, InputType>
         where MigrationStepType : DataMigrationStep<VersionType, InputType>
-        where VersionType : System.IComparable<VersionType>, System.IEquatable<VersionType>
     {
-        private Dictionary<VersionType, List<MigrationStepType>> graph;
+        private Dictionary<VersionType, List<MigrationStepType>> graph = new Dictionary<VersionType, List<MigrationStepType>>();
 
         // Throws an ArgumentException if there is a migration step that already exists for that specific directed edge of the graph
         internal void RegisterMigrationStep(MigrationStepType migrationStep)
@@ -133,55 +131,29 @@ namespace ConfigFileMigration
 
     public abstract class DataMigrator<MigrationStepType, VersionType, InputType> 
         where MigrationStepType : DataMigrationStep<VersionType, InputType> 
-        where VersionType : System.IComparable<VersionType>, System.IEquatable<VersionType>
     {
-        private MigrationGraph<MigrationStepType, VersionType, InputType> migrationGraph;
+        private DataMigrationGraph<MigrationStepType, VersionType, InputType> migrationGraph = new DataMigrationGraph<MigrationStepType, VersionType, InputType>();
 
         public void RegisterMigrationStep(MigrationStepType migrationStep)
         {
             migrationGraph.RegisterMigrationStep(migrationStep);
         }
 
+        internal List<MigrationStepType> GetShortestMigrationPath(VersionType from, VersionType to)
+        {
+            return migrationGraph.GetShortestMigrationPath(from, to);
+        }
+
         public abstract bool RunMigration(InputType input);
     }
 
-    public class VersionNumber : IComparable<VersionNumber>, IEquatable<VersionNumber>
+    public class ConfigMigrationStep : DataMigrationStep<int, FileInfo>
     {
-        public VersionNumber(int version) => m_value = version;
-
-        public int CompareTo(VersionNumber other)
-        {
-            // If other is not a valid object reference, this instance is greater.
-            if (other == null) return 1;
-
-            // The temperature comparison depends on the comparison of
-            // the underlying Double values.
-            return m_value.CompareTo(other.m_value);
-        }
-
-        public bool Equals(VersionNumber other)
-        {
-            if (other == null)
-                return false;
-
-            if (this.m_value == other.m_value)
-                return true;
-            else
-                return false;
-        }
-
-        protected int m_value = 0;
-
-        public static implicit operator VersionNumber(int value) => new VersionNumber(value);
-    }
-
-    public class ConfigMigrationStep : DataMigrationStep<VersionNumber, FileInfo>
-    {
-        public ConfigMigrationStep(VersionNumber from, VersionNumber to, Func<FileInfo, bool> run, int cost = 1)
+        public ConfigMigrationStep(int from, int to, Func<FileInfo, bool> run, int cost = 1)
             : base(from, to, run, cost) {}
     }
 
-    public class ConfigDataMigrator : DataMigrator<ConfigMigrationStep, VersionNumber, FileInfo> 
+    public class ConfigDataMigrator : DataMigrator<ConfigMigrationStep, int, FileInfo>
     {
         public bool SafeMode { get; set; } = true;
 
@@ -207,7 +179,14 @@ namespace ConfigFileMigration
             );
 
             var configFileInfo = new FileInfo(@"Data/premigrationConfig.json");
-            configDataMigrator.RunMigration(configFileInfo);
+            var shortestPath = configDataMigrator.GetShortestMigrationPath(1, 2);
+
+            for (int i = 0; i < shortestPath.Count; ++i)
+            {
+                Console.WriteLine($"{shortestPath[i].From} to {shortestPath[i].To}");
+            }
+
+            // configDataMigrator.RunMigration(configFileInfo);
         }
     }
 }
