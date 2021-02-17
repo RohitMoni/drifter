@@ -47,7 +47,11 @@ namespace Drifter.Specializations
 
             for (int i = 0; i < migrationPath.Count; ++i) 
             {
-                migrationPath[i].Run(operatingFile);
+                var stepSuccess = migrationPath[i].Run(operatingFile);
+                if (!stepSuccess)
+                {
+                    return false;
+                }
             }
 
             if (SafeMode)
@@ -62,6 +66,19 @@ namespace Drifter.Specializations
             }
 
             return true;
+        }
+
+        public void RollbackMigration(FileInfo input)
+        {
+            var rollbackTarget = new FileInfo($"{input.FullName}.rollbacktarget");
+            if (File.Exists(rollbackTarget.FullName))
+            {
+                File.Move(rollbackTarget.FullName, input.FullName, true);
+            }
+            else
+            {
+                throw new InvalidOperationException("No rollback target for this file exists, cannot rollback");
+            }
         }
     }
 }
