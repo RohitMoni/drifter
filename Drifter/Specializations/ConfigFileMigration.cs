@@ -22,27 +22,46 @@ namespace Drifter.Specializations
 
         public override bool RunMigration(FileInfo input, int from, int to)
         {
-            configFile = input;
+            FileInfo configFile = input;
 
             var migrationPath = GetShortestMigrationPath(from, to);
 
-            outputFile = configFile;
+            FileInfo outputFile = configFile;
             if (OutputFileNameOverride != null)
             {
-                outputFile = new FileInfo(Path.Combine(configFile.DirectoryName, $"{OutputFileNameOverride}.{configFile.Extension}"));
+                outputFile = new FileInfo(Path.Combine(configFile.DirectoryName, $"{OutputFileNameOverride}{configFile.Extension}"));
                 File.Copy(configFile.FullName, outputFile.FullName);
+            }
+
+            if (Reversible)
+            {
+                File.Copy(configFile.FullName, $"{configFile.FullName}.rollbacktarget");
+            }
+
+            FileInfo operatingFile = outputFile;
+            if (SafeMode)
+            {
+                File.Copy(operatingFile.FullName, $"{operatingFile.FullName}.migrating");
+                operatingFile = new FileInfo($"{operatingFile.FullName}.migrating");
             }
 
             for (int i = 0; i < migrationPath.Count; ++i) 
             {
-                migrationPath[i].Run(outputFile);
+                migrationPath[i].Run(operatingFile);
+            }
+
+            if (SafeMode)
+            {
+                File.Move(operatingFile.FullName, outputFile.FullName, true);
+                File.Delete(operatingFile.FullName);
+            }
+
+            if (OutputFileNameOverride != null)
+            {
+                File.Delete(configFile.FullName);
             }
 
             return true;
         }
-
-        private FileInfo configFile;
-
-        private FileInfo outputFile;
     }
 }
