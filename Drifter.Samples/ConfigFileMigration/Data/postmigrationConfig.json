@@ -1,19 +1,25 @@
 {
     "version": "2",
-    "name": "Drifter",
+    "id": "Drifter",
     "sampleNumber": 1,
-    "context": {
-        "comment": "This shows an example of a json object"
+    "context": 
+    {
+        "comment": "This shows an example of a json object",
+        "otherkey": "someotherstring"
     },
-    "configTypesSupported": [
+    "configTypesSupported": 
+    [
         "Any",
         "This",
         "Is",
         "Just",
         "An",
         "Array",
-        "Example"
+        "Example",
+        "With",
+        "More",
+        "Elements"
     ],
     "migrated": false,
-    "nullable": null
+    "newField": "MyNewString"
 }

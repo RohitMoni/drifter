@@ -17,6 +17,6 @@ namespace Drifter
             return migrationGraph.GetShortestMigrationPath(from, to);
         }
 
-        public abstract bool RunMigration(InputType input);
+        public abstract bool RunMigration(InputType input, VersionType from, VersionType to);
     }
 }
