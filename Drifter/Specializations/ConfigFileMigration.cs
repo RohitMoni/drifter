@@ -20,41 +20,29 @@ namespace Drifter.Specializations
         // Overrides the output file name of migrated config file
         public string OutputFileNameOverride { get; set; } = null;
 
-
         public override bool RunMigration(FileInfo input, int from, int to)
         {
             configFile = input;
 
             var migrationPath = GetShortestMigrationPath(from, to);
 
-            FileInfo operatingFile = configFile;
-            if (SafeMode || Reversible)
+            outputFile = configFile;
+            if (OutputFileNameOverride != null)
             {
-                operatingFile = new FileInfo($"{configFile.FullName}.migrating");
-                File.Copy(configFile.FullName, operatingFile.FullName);
+                outputFile = new FileInfo(Path.Combine(configFile.DirectoryName, $"{OutputFileNameOverride}.{configFile.Extension}"));
+                File.Copy(configFile.FullName, outputFile.FullName);
             }
 
             for (int i = 0; i < migrationPath.Count; ++i) 
             {
-                migrationPath[i].Run(operatingFile);
-            }
-
-            if (SafeMode)
-            {
-                if (Reversible)
-                    File.Replace(configFile.FullName, operatingFile.FullName, $"{configFile.FullName}.old");
-                else 
-                    File.Replace(configFile.FullName, operatingFile.FullName, null);
-            }
-
-            if (OutputFileNameOverride != null)
-            {
-                File.Move(configFile.FullName, Path.Combine(configFile.DirectoryName, $"{OutputFileNameOverride}.{configFile.Extension}"));
+                migrationPath[i].Run(outputFile);
             }
 
             return true;
         }
 
         private FileInfo configFile;
+
+        private FileInfo outputFile;
     }
 }

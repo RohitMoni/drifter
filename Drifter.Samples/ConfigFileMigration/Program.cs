@@ -73,6 +73,8 @@ namespace ConfigFileMigration
             var configFileVersion = 1;
             var migrateToVersion = 2;
 
+            // Overriding the output file name so we don't lose the original file for this sample
+            configDataMigrator.OutputFileNameOverride = "testrun";
             configDataMigrator.RunMigration(configFileInfo, configFileVersion, migrateToVersion);
         }
     }
